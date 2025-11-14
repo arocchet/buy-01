@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Let's Play DB Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .data { background: #f5f5f5; padding: 10px; border-radius: 3px; margin: 10px 0; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Let's Play - Database Viewer</h1>
+
+        <div class="section">
+            <h2>👥 Users</h2>
+            <button onclick="loadUsers()">Charger les utilisateurs</button>
+            <button onclick="loadUserStats()">Statistiques</button>
+            <div id="users-data" class="data"></div>
+        </div>
+
+        <div class="section">
+            <h2>📦 Products</h2>
+            <button onclick="loadProducts()">Charger les produits</button>
+            <button onclick="loadProductStats()">Statistiques</button>
+            <div id="products-data" class="data"></div>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Test API</h2>
+            <input type="text" id="token" placeholder="JWT Token" style="width: 70%; padding: 8px;">
+            <button onclick="testAPI()">Test avec Token</button>
+            <div id="api-test" class="data"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function apiCall(endpoint, token = null) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, { headers });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function loadUsers() {
+            const token = document.getElementById('token').value;
+            try {
+                const users = await apiCall('/users', token);
+                document.getElementById('users-data').innerHTML =
+                    `<h3>✅ ${users.length} utilisateurs trouvés</h3>
+                     <pre>${JSON.stringify(users, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('users-data').innerHTML =
+                    `<div class="error">❌ Erreur: ${error.message}</div>
+                     <p>💡 Conseil: Utilisez un token admin pour accéder aux utilisateurs</p>`;
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const products = await apiCall('/products');
+                document.getElementById('products-data').innerHTML =
+                    `<h3>✅ ${products.length} produits trouvés</h3>
+                     <pre>${JSON.stringify(products, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('products-data').innerHTML =
+                    `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+
+        async function loadUserStats() {
+            const token = document.getElementById('token').value;
+            try {
+                const users = await apiCall('/users', token);
+                const stats = users.reduce((acc, user) => {
+                    acc[user.role] = (acc[user.role] || 0) + 1;
+                    return acc;
+                }, {});
+
+                document.getElementById('users-data').innerHTML =
+                    `<h3>📊 Statistiques des utilisateurs</h3>
+                     <p>Total: ${users.length}</p>
+                     <p>Admins: ${stats.admin || 0}</p>
+                     <p>Users: ${stats.user || 0}</p>
+                     <pre>${JSON.stringify(users.map(u => ({id: u.id, name: u.name, email: u.email, role: u.role})), null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('users-data').innerHTML =
+                    `<div class="error">❌ ${error.message}</div>`;
+            }
+        }
+
+        async function loadProductStats() {
+            try {
+                const products = await apiCall('/products');
+                const totalValue = products.reduce((sum, p) => sum + p.price, 0);
+                const avgPrice = products.length > 0 ? totalValue / products.length : 0;
+
+                document.getElementById('products-data').innerHTML =
+                    `<h3>📊 Statistiques des produits</h3>
+                     <p>Total: ${products.length}</p>
+                     <p>Valeur totale: ${totalValue.toFixed(2)}€</p>
+                     <p>Prix moyen: ${avgPrice.toFixed(2)}€</p>
+                     <pre>${JSON.stringify(products, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('products-data').innerHTML =
+                    `<div class="error">❌ ${error.message}</div>`;
+            }
+        }
+
+        async function testAPI() {
+            const token = document.getElementById('token').value;
+            let results = '<h3>🧪 Test des endpoints</h3>';
+
+            // Test endpoints publics
+            try {
+                await apiCall('/products');
+                results += '<p>✅ GET /products (public) - OK</p>';
+            } catch (e) {
+                results += `<p>❌ GET /products - ${e.message}</p>`;
+            }
+
+            // Test avec authentification
+            if (token) {
+                try {
+                    await apiCall('/users', token);
+                    results += '<p>✅ GET /users (auth) - OK</p>';
+                } catch (e) {
+                    results += `<p>❌ GET /users - ${e.message}</p>`;
+                }
+            } else {
+                results += '<p>⚠️ Aucun token fourni - Tests d\'auth ignorés</p>';
+            }
+
+            document.getElementById('api-test').innerHTML = results;
+        }
+
+        // Charger les données au démarrage
+        window.onload = () => {
+            loadProducts();
+        };
+    </script>
+</body>
+</html>

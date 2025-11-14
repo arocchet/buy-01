@@ -1,0 +1,40 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/letsplay}
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890}
+      expiration: ${JWT_EXPIRATION:86400000} # 24 hours
+
+server:
+  port: ${SERVER_PORT:8443}
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:changeit}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:letsplay}
+  # Force HTTPS redirect
+  require-ssl: true
+
+# Security headers for production
+management:
+  server:
+    ssl:
+      enabled: true
+
+# Additional security for production
+security:
+  headers:
+    frame-options: DENY
+    content-type-options: nosniff
+    xss-protection: 1; mode=block
+    strict-transport-security: max-age=31536000; includeSubDomains
+
+logging:
+  level:
+    com.letsplay.letsplay: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
