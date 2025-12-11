@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: user-service
+  profiles:
+    active: local
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/userservice
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: user-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.letsplay.userservice.event"
+  security:
+    jwt:
+      secret: mySecretKey123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+      expiration: 86400000 # 24 hours
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.letsplay.userservice: DEBUG
+    org.springframework.security: DEBUG
+
+---
+spring:
+  profiles: docker
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://admin:password123@mongodb:27017/userservice?authSource=admin}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}

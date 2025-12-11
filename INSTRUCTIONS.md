@@ -1,69 +1,67 @@
-## Let's Play
+## Microservices with Angular
 
 ### Objectives
 
-You will be developing a basic CRUD (Create, Read, Update, Delete) API using Spring Boot with MongoDB, and it should adhere to RESTful principles. The application will contain user management and product management functionalities.
+Develop an end-to-end e-commerce platform with Spring Boot microservices and Angular. The platform should support user registration (either as a client or seller), authentication, product CRUD functionality exclusively for sellers, and media management for product images.
 
 ### Instructions
 
-#### 1. Database Design
+#### 1. Microservices Setup
 
-```mermaid
-classDiagram
-    User "1" -- "n" Product : Owns
-    User : +String id
-    User : +String name
-    User : +String email
-    User : +String password
-    User : +String role
-    Product : +String id
-    Product : +String name
-    Product : +String description
-    Product : +Double price
-    Product : +String userId
-```
+- Set up your microservice architecture. Consider Kafka for services communications.
 
-#### 2. API Development
+#### 2. Enhanced Database Design
 
-You should provide a set of RESTful APIs to perform CRUD operations on both Users and Products. The APIs should be designed according to the REST standard. The "GET Products" API should be accessible without authentication.
+![DataBase Design](./Database-Design.png)
 
-#### 3. Authentication & Authorization
+#### 3. API Development Enhancement
 
-Implement a token-based authentication system. Only authenticated users can access the APIs. The users can have different roles (admin or user), and the API access should be controlled based on the user roles.
+- **User Microservice**:
+    - Users can register as clients or sellers, with sellers having the option to upload an avatar.
+    - Authentication and profile management functions should be available.
 
-> 💡 Spring Security 
+- **Product Microservice**:
+    - CRUD operations for products, with only authenticated sellers being able to create/update/delete their products.
+    - Products should support an associated list of images.
 
-#### 4. Error Handling
+- **Media Microservice**:
+    - Handle media uploads with a size limit of 2MB.
+    - Ensure only legitimate image files are uploaded.
 
-The API should not return any 5XX errors. You should handle any possible exceptions and return appropriate HTTP response codes and messages.
+#### 4. Front-end Development with Angular
 
-#### 5. Security Measures
+- **Sign-In/Up Pages**: Implement authentication views. Sellers should have the option to upload/update their avatar.
+- **Seller Product Management**: A dashboard where sellers can manage their products, including uploading images.
+- **Product Listing**: A simple view to display all products without filtering or search capabilities.
+- **Media Management**: A dedicated view for sellers to manage and upload media specifically for their products. Ensure appropriate file size and type validation.
 
-Implement the following security measures:
+#### 5. Authentication & Authorization
 
-- Hash and salt passwords before storing them in the database.
-- Validate inputs to prevent MongoDB injection attacks.
-- Protect sensitive user information. Don't return passwords or other sensitive information in your API responses.
-- Use HTTPS to protect data in transit.
+- Implement role-based authentication.
+- Use **Spring Security** with **JWT** or **OAuth2** to distinguish between clients and sellers, ensuring only sellers can manage products and their associated media.
 
-### Bonus 
+#### 6. Error Handling and Validation
 
-As an additional challenge, you could consider implementing the following features. Note that these are not required for the completion of the project but would provide additional learning opportunities:
+- Provide feedback for incorrect file types or when exceeding the upload size limit.
+- Handle cases like a client trying to add a product or a seller trying to modify another seller's product.
+- Provide validation for all forms in the application.
 
-- **Set appropriate CORS policies:** Implement Cross-Origin Resource Sharing (CORS) policies to manage the security of your application when it is accessed from different domains.
-- **Implement rate limiting to prevent brute force attacks:** Use rate limiting to restrict the number of API requests a client can make in a given time. This can help prevent attacks and misuse of your application.
+#### 7. Security Measures
+
+- **HTTPS Encryption**: Always use HTTPS to encrypt data in transit. Consider tools like **Let's Encrypt** for free SSL certificates.
+- **Sensitive Information Protection**: Protect sensitive user information. Passwords and other details should never be exposed in API responses.
+- **Password Security**: Use **Spring Security** to hash and salt passwords before saving them in the MongoDB database.
+- **Access Control**: Ensure only the seller who created a product can modify or delete it and manage its media.
 
 ### Testing
 
-Your project will be extensively tested for the following aspects:
-
-- Correctness of the APIs.
-- Proper implementation of authentication and authorization.
-- The absence of 5XX errors.
-- Implementation of the above-mentioned security measures.
-
-In order for auditors to test your program, you will have to run your project using a code editor or provide a script to run it.
+Emphasize testing:
+- Role-based functionalities.
+- Media upload constraints.
+- Authentication flows.
+- Data integrity for product and media management by sellers.
 
 ### Resources
-[Spring initializer](https://start.spring.io/)
-[Rest Documentation](https://docs.github.com/en/rest?apiVersion=2022-11-28)
+[Spring Boot Microservices Guide](https://spring.io/guides/tutorials/rest/)
+[Spring Cloud Eureka Service Discovery Client Setup](https://www.baeldung.com/spring-cloud-netflix-eureka)  
+[Let's Encrypt for ssl(HTTPS)](https://letsencrypt.org/getting-started/)
