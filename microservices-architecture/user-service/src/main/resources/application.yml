@@ -1,8 +1,6 @@
 spring:
   application:
     name: user-service
-  profiles:
-    active: local
   data:
     mongodb:
       uri: mongodb://localhost:27017/userservice
@@ -23,7 +21,7 @@ spring:
       expiration: 86400000 # 24 hours
 
 server:
-  port: 8081
+  port: 8080
 
 logging:
   level:
@@ -32,7 +30,9 @@ logging:
 
 ---
 spring:
-  profiles: docker
+  config:
+    activate:
+      on-profile: docker
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://admin:password123@mongodb:27017/userservice?authSource=admin}

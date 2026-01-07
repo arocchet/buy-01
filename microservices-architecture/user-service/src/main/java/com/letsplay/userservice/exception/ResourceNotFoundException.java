@@ -1,4 +1,4 @@
-package com.letsplay.letsplay.exception;
+package com.letsplay.userservice.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

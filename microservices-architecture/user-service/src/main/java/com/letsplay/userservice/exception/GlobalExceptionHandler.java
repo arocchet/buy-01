@@ -1,4 +1,4 @@
-package com.letsplay.letsplay.exception;
+package com.letsplay.userservice.exception;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;

@@ -1,7 +1,7 @@
-package com.letsplay.letsplay.security;
+package com.letsplay.userservice.security;
 
-import com.letsplay.letsplay.model.User;
-import com.letsplay.letsplay.repository.UserRepository;
+import com.letsplay.userservice.model.User;
+import com.letsplay.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

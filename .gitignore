@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+target/
+*.jar
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Docker
+docker-compose/data/
+
+# Uploads
+uploads/
+
+# Angular
+frontend/dist/
+frontend/.angular/
+frontend/node_modules/

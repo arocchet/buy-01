@@ -1,4 +1,4 @@
-package com.letsplay.letsplay.exception;
+package com.letsplay.userservice.exception;
 
 import java.time.LocalDateTime;
 import java.util.List;

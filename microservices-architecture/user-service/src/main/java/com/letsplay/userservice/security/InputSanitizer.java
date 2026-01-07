@@ -1,5 +1,4 @@
-// Eviter les injection sql en db
-package com.letsplay.letsplay.security;
+package com.letsplay.userservice.security;
 
 import java.util.regex.Pattern;
 
@@ -33,7 +32,6 @@ public class InputSanitizer {
         }
 
         String sanitized = input.replaceAll("[<>\"'&]", "");
-
         sanitized = sanitized.replaceAll("\\$", "");
         sanitized = sanitized.replaceAll("\\{|\\}", "");
 

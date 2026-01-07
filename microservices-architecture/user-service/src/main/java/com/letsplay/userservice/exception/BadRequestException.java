@@ -1,4 +1,4 @@
-package com.letsplay.letsplay.exception;
+package com.letsplay.userservice.exception;
 
 public class BadRequestException extends RuntimeException {
     public BadRequestException(String message) {

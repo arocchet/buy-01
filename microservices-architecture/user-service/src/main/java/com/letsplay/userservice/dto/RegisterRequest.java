@@ -1,4 +1,4 @@
-package com.letsplay.letsplay.dto;
+package com.letsplay.userservice.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -18,8 +18,8 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    @Pattern(regexp = "^(admin|user)$", message = "Role must be either 'admin' or 'user'")
-    private String role = "user";
+    @Pattern(regexp = "^(client|seller)$", message = "Role must be either 'client' or 'seller'")
+    private String role = "client";
 
     public RegisterRequest() {}
 

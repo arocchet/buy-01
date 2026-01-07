@@ -1,0 +1,92 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # User Service Routes
+        - id: user-service-auth
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: user-service-users
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        # Product Service Routes
+        - id: product-service
+          uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        # Media Service Routes
+        - id: media-service
+          uri: ${MEDIA_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+
+
+  security:
+    jwt:
+      secret: mySecretKey123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  level:
+    com.letsplay.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    gateway:
+      routes:
+        - id: user-service-auth
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: user-service-users
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: product-service
+          uri: http://product-service:8082
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: media-service
+          uri: http://media-service:8083
+          predicates:
+            - Path=/api/media/**
+          filters:
+            - name: JwtAuthenticationFilter
