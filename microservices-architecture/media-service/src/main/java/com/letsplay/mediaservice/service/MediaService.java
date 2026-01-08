@@ -20,7 +20,7 @@ public class MediaService {
     private final FileStorageService fileStorageService;
     private final FileValidator fileValidator;
 
-    @Value("${app.base-url:http://localhost:8083}")
+    @Value("${app.base-url:https://localhost:8083}")
     private String baseUrl;
 
     public MediaService(MediaRepository mediaRepository, 

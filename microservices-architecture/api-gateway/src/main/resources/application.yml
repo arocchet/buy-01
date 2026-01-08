@@ -1,5 +1,11 @@
 server:
   port: 8080
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    key-alias: api-gateway
 
 spring:
   application:
@@ -9,14 +15,14 @@ spring:
       routes:
         # User Service Routes
         - id: user-service-auth
-          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          uri: ${USER_SERVICE_URL:https://localhost:8081}
           predicates:
             - Path=/api/auth/**
           filters:
             - name: JwtAuthenticationFilter
 
         - id: user-service-users
-          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          uri: ${USER_SERVICE_URL:https://localhost:8081}
           predicates:
             - Path=/api/users/**
           filters:
@@ -24,7 +30,7 @@ spring:
 
         # Product Service Routes
         - id: product-service
-          uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+          uri: ${PRODUCT_SERVICE_URL:https://localhost:8082}
           predicates:
             - Path=/api/products/**
           filters:
@@ -32,13 +38,11 @@ spring:
 
         # Media Service Routes
         - id: media-service
-          uri: ${MEDIA_SERVICE_URL:http://localhost:8083}
+          uri: ${MEDIA_SERVICE_URL:https://localhost:8083}
           predicates:
             - Path=/api/media/**
           filters:
             - name: JwtAuthenticationFilter
-
-
 
   security:
     jwt:

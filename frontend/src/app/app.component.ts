@@ -3,16 +3,16 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 
 @Component({
-    selector: 'app-root',
-    standalone: true,
-    imports: [RouterOutlet, NavbarComponent],
-    template: `
+  selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet, NavbarComponent],
+  template: `
     <app-navbar></app-navbar>
     <main class="main-content">
       <router-outlet></router-outlet>
     </main>
   `,
-    styles: [`
+  styles: [`
     .main-content {
       min-height: calc(100vh - 80px);
       padding-top: 80px;
@@ -20,5 +20,5 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
   `]
 })
 export class AppComponent {
-    title = 'Let\'s Play';
+  title = 'Buy01';
 }
