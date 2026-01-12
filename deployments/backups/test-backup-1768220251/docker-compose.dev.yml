@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  user-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ROOT=DEBUG
+    volumes:
+      - ./logs:/app/logs
+
+  product-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ROOT=DEBUG
+    volumes:
+      - ./logs:/app/logs
+
+  media-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ROOT=DEBUG
+    volumes:
+      - ./logs:/app/logs
+
+  api-gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ROOT=DEBUG
+    volumes:
+      - ./logs:/app/logs
+
+  # Development database viewer
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express-dev
+    ports:
+      - "8889:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb
+    networks:
+      - microservices-network

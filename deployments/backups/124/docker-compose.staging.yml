@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  user-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - LOGGING_LEVEL_ROOT=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  product-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - LOGGING_LEVEL_ROOT=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  media-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - LOGGING_LEVEL_ROOT=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  api-gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - LOGGING_LEVEL_ROOT=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx reverse proxy for staging
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-staging
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api-gateway
+    networks:
+      - microservices-network
