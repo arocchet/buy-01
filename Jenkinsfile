@@ -19,8 +19,13 @@ pipeline {
         )
         string(
             name: 'BRANCH',
-            defaultValue: 'main',
+            defaultValue: 'cicd-production',
             description: 'Git branch to build'
+        )
+        string(
+            name: 'GIT_URL',
+            defaultValue: 'https://github.com/arocchet/buy-01.git',
+            description: 'Git repository URL'
         )
     }
 
@@ -32,31 +37,18 @@ pipeline {
         cron('@daily')
     }
 
-    tools {
-        nodejs '18.x'
-        maven '3.8.x'
-    }
 
     environment {
         DOCKER_REGISTRY = 'localhost:5000'
         APP_NAME = 'buy01'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
-        GIT_COMMIT_SHORT = sh(
-            script: "git rev-parse --short HEAD",
-            returnStdout: true
-        ).trim()
     }
 
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    echo "🔄 Checking out branch: ${params.BRANCH}"
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: "*/${params.BRANCH}"]],
-                        userRemoteConfigs: [[url: env.GIT_URL]]
-                    ])
+                    echo "🔄 Using workspace files (already checked out)"
                 }
             }
         }
@@ -64,6 +56,11 @@ pipeline {
         stage('Build Info') {
             steps {
                 script {
+                    env.GIT_COMMIT_SHORT = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                    
                     echo "🏗️ Build Information:"
                     echo "Environment: ${params.ENVIRONMENT}"
                     echo "Branch: ${params.BRANCH}"
@@ -372,29 +369,15 @@ pipeline {
         always {
             script {
                 echo "🧹 Cleaning up workspace..."
-                cleanWs()
+                deleteDir()
             }
         }
         success {
             script {
                 echo "✅ Build completed successfully!"
 
-                // Send success notification
-                emailext (
-                    subject: "✅ Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: """
-                        <h2>Build Completed Successfully! 🎉</h2>
-                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                        <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
-                        <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                        <p><strong>Commit:</strong> ${env.GIT_COMMIT_SHORT}</p>
-                        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                        <p>The application has been successfully deployed and is ready for use.</p>
-                    """,
-                    to: "${env.CHANGE_AUTHOR_EMAIL}",
-                    mimeType: 'text/html'
-                )
+                // Send success notification (commented out - no email server)
+                echo "✅ Email: Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             }
         }
         failure {
@@ -415,41 +398,15 @@ pipeline {
                     '''
                 }
 
-                // Send failure notification
-                emailext (
-                    subject: "❌ Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: """
-                        <h2>Build Failed! ❌</h2>
-                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                        <p><strong>Environment:</strong> ${params.ENVIRONMENT}</p>
-                        <p><strong>Branch:</strong> ${params.BRANCH}</p>
-                        <p><strong>Commit:</strong> ${env.GIT_COMMIT_SHORT}</p>
-                        <p><strong>Build URL:</strong> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                        <p><strong>Console Output:</strong> <a href="${env.BUILD_URL}console">${env.BUILD_URL}console</a></p>
-                        <p>Please check the build logs for more details.</p>
-                    """,
-                    to: "${env.CHANGE_AUTHOR_EMAIL}",
-                    mimeType: 'text/html'
-                )
+                // Send failure notification (commented out - no email server)
+                echo "❌ Email: Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             }
         }
         unstable {
             script {
                 echo "⚠️ Build unstable (some tests failed)"
 
-                emailext (
-                    subject: "⚠️ Build Unstable - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: """
-                        <h2>Build Unstable ⚠️</h2>
-                        <p>Some tests failed but the build completed.</p>
-                        <p><strong>Project:</strong> ${env.JOB_NAME}</p>
-                        <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
-                        <p><strong>Test Results:</strong> <a href="${env.BUILD_URL}testReport">${env.BUILD_URL}testReport</a></p>
-                    """,
-                    to: "${env.CHANGE_AUTHOR_EMAIL}",
-                    mimeType: 'text/html'
-                )
+                echo "⚠️ Email: Build Unstable - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
             }
         }
     }
