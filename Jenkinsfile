@@ -77,11 +77,11 @@ pipeline {
                         dir('microservices-architecture/user-service') {
                             script {
                                 echo "🔨 Building User Service..."
-                                sh 'mvn clean compile'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn clean compile'
 
                                 if (params.RUN_TESTS) {
                                     echo "🧪 Testing User Service..."
-                                    sh 'mvn test'
+                                    sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn test'
                                     publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
                                     publishCoverage adapters: [
                                         jacocoAdapter('target/site/jacoco/jacoco.xml')
@@ -89,7 +89,7 @@ pipeline {
                                 }
 
                                 echo "📦 Packaging User Service..."
-                                sh 'mvn package -DskipTests'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn package -DskipTests'
                             }
                         }
                     }
@@ -105,16 +105,16 @@ pipeline {
                         dir('microservices-architecture/product-service') {
                             script {
                                 echo "🔨 Building Product Service..."
-                                sh 'mvn clean compile'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn clean compile'
 
                                 if (params.RUN_TESTS) {
                                     echo "🧪 Testing Product Service..."
-                                    sh 'mvn test'
+                                    sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn test'
                                     publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
                                 }
 
                                 echo "📦 Packaging Product Service..."
-                                sh 'mvn package -DskipTests'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn package -DskipTests'
                             }
                         }
                     }
@@ -130,16 +130,16 @@ pipeline {
                         dir('microservices-architecture/media-service') {
                             script {
                                 echo "🔨 Building Media Service..."
-                                sh 'mvn clean compile'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn clean compile'
 
                                 if (params.RUN_TESTS) {
                                     echo "🧪 Testing Media Service..."
-                                    sh 'mvn test'
+                                    sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn test'
                                     publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
                                 }
 
                                 echo "📦 Packaging Media Service..."
-                                sh 'mvn package -DskipTests'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn package -DskipTests'
                             }
                         }
                     }
@@ -155,16 +155,16 @@ pipeline {
                         dir('microservices-architecture/api-gateway') {
                             script {
                                 echo "🔨 Building API Gateway..."
-                                sh 'mvn clean compile'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn clean compile'
 
                                 if (params.RUN_TESTS) {
                                     echo "🧪 Testing API Gateway..."
-                                    sh 'mvn test'
+                                    sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn test'
                                     publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
                                 }
 
                                 echo "📦 Packaging API Gateway..."
-                                sh 'mvn package -DskipTests'
+                                sh 'docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn package -DskipTests'
                             }
                         }
                     }
@@ -256,7 +256,7 @@ pipeline {
                             // OWASP dependency check for Java services
                             sh '''
                                 cd microservices-architecture/user-service
-                                mvn org.owasp:dependency-check-maven:check
+                                docker run --rm -v "$PWD":/usr/src/mymaven -v "$HOME/.m2":/root/.m2 -w /usr/src/mymaven maven:3.8-openjdk-17 mvn org.owasp:dependency-check-maven:check
                             '''
                         }
                     }
