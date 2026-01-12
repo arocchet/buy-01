@@ -42,6 +42,8 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000'
         APP_NAME = 'buy01'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        // Slack webhook (configurez SLACK_WEBHOOK_URL dans Jenkins)
+        SLACK_WEBHOOK_TEMPLATE = 'https://hooks.slack.com/services/T093JERASCR/B0A8J2SDY9X/VOTRE_TOKEN'
     }
 
     stages {
@@ -261,6 +263,18 @@ pipeline {
                 script {
                     echo "🚀 Deploying to ${params.ENVIRONMENT} environment..."
 
+                    // Send deployment start notification
+                    env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
+                    env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
+                    sh '''
+                        ./scripts/send-notification.sh --slack-only "🚀 Déploiement Buy01 en cours...
+
+⏳ Build #${BUILD_NUMBER} en déploiement
+🎯 Environnement: ${ENVIRONMENT}
+📋 Création de backup avant déploiement
+⚙️ Mise à jour des services..."
+                    '''
+
                     // Create backup before deployment
                     sh '''
                         echo "📋 Creating backup of current deployment..."
@@ -356,8 +370,18 @@ pipeline {
             script {
                 echo "✅ Build completed successfully!"
 
-                // Send success notification (commented out - no email server)
-                echo "✅ Email: Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                // Send success notification
+                env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
+                env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
+                sh '''
+                    ./scripts/send-notification.sh --slack-only "🎉 Buy01 déployé avec succès en ${ENVIRONMENT}!
+
+✅ Build #${BUILD_NUMBER} terminé
+🏆 Tous les tests passés
+🚀 Application accessible et opérationnelle
+📊 Services: User, Product, Media & API Gateway
+🔗 API Gateway: https://localhost:8080"
+                '''
             }
         }
         failure {
@@ -378,15 +402,38 @@ pipeline {
                     '''
                 }
 
-                // Send failure notification (commented out - no email server)
-                echo "❌ Email: Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                // Send failure notification
+                env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
+                env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
+                sh '''
+                    ./scripts/send-notification.sh --slack-only "🚨 Échec du déploiement Buy01 en ${ENVIRONMENT}
+
+❌ Build #${BUILD_NUMBER} échoué
+🔄 Rollback automatique en cours...
+🔍 Vérifiez les logs Jenkins
+🛠️ Intervention requise
+
+Console: ${BUILD_URL}console"
+                '''
             }
         }
         unstable {
             script {
                 echo "⚠️ Build unstable (some tests failed)"
 
-                echo "⚠️ Email: Build Unstable - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                // Send unstable notification
+                env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
+                env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
+                sh '''
+                    ./scripts/send-notification.sh --slack-only "⚠️ Build Buy01 instable en ${ENVIRONMENT}
+
+🟡 Build #${BUILD_NUMBER} instable
+🧪 Certains tests ont échoué
+✅ Déploiement effectué malgré tout
+📊 Voir les résultats de tests
+
+Tests: ${BUILD_URL}testReport"
+                '''
             }
         }
     }
