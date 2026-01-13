@@ -267,7 +267,7 @@ pipeline {
                     env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                     env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
                     sh """
-                        ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚀 Déploiement Buy01 en cours...
+                        cd "${env.WORKSPACE}" && ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚀 Déploiement Buy01 en cours...
 
 ⏳ Build #${BUILD_NUMBER} en déploiement
 🎯 Environnement: ${ENVIRONMENT}
@@ -363,7 +363,9 @@ pipeline {
         always {
             script {
                 echo "🧹 Cleaning up workspace..."
-                cleanWs(deleteDirs: true, notFailOnEmpty: true, patterns: [[pattern: 'logs/**', type: 'EXCLUDE']])
+                sh '''
+                    ls -A | grep -v logs | xargs rm -rf
+                '''
             }
         }
         success {
@@ -374,7 +376,7 @@ pipeline {
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
                 sh """
-                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🎉 Buy01 déployé avec succès en ${ENVIRONMENT}!
+                    cd "${env.WORKSPACE}" && ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🎉 Buy01 déployé avec succès en ${ENVIRONMENT}!
 
 ✅ Build #${BUILD_NUMBER} terminé
 🏆 Tous les tests passés
@@ -406,7 +408,7 @@ pipeline {
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
                 sh """
-                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚨 Échec du déploiement Buy01 en ${ENVIRONMENT}
+                    cd "${env.WORKSPACE}" && ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚨 Échec du déploiement Buy01 en ${ENVIRONMENT}
 
 ❌ Build #${BUILD_NUMBER} échoué
 🔄 Rollback automatique en cours...
@@ -425,7 +427,7 @@ Console: ${BUILD_URL}console"
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
                 sh """
-                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "⚠️ Build Buy01 instable en ${ENVIRONMENT}
+                    cd "${env.WORKSPACE}" && ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "⚠️ Build Buy01 instable en ${ENVIRONMENT}
 
 🟡 Build #${BUILD_NUMBER} instable
 🧪 Certains tests ont échoué
