@@ -185,12 +185,15 @@ EOF
     # Send to Slack
     # Debug: Show payload being sent
     echo -e "${BLUE}🔍 Debug - Webhook URL: ${SLACK_WEBHOOK_URL:0:50}...${NC}"
+    echo -e "${BLUE}🔍 Debug - Payload (first 300 chars):${NC}"
+    echo "$payload" | head -c 300
+    echo ""
 
     # Send to Slack
-    local response=$(curl -X POST \
+    local response=$(curl -s -X POST \
         -H 'Content-type: application/json' \
         --data "$payload" \
-        "$SLACK_WEBHOOK_URL" 2>&1)
+        "$SLACK_WEBHOOK_URL")
 
     echo -e "${BLUE}🔍 Debug - Slack response: $response${NC}"
 
