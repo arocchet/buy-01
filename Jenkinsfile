@@ -360,14 +360,6 @@ pipeline {
     }
 
     post {
-        always {
-            script {
-                echo "🧹 Cleaning up workspace..."
-                sh '''
-                    ls -A | grep -v logs | xargs rm -rf
-                '''
-            }
-        }
         success {
             script {
                 echo "✅ Build completed successfully!"
@@ -384,6 +376,12 @@ pipeline {
 📊 Services: User, Product, Media & API Gateway
 🔗 API Gateway: https://localhost:8080"
                 """
+
+                // Cleanup after notifications
+                echo "🧹 Cleaning up workspace..."
+                sh '''
+                    ls -A | grep -v logs | xargs rm -rf || true
+                '''
             }
         }
         failure {
@@ -417,6 +415,12 @@ pipeline {
 
 Console: ${BUILD_URL}console"
                 """
+
+                // Cleanup after notifications
+                echo "🧹 Cleaning up workspace..."
+                sh '''
+                    ls -A | grep -v logs | xargs rm -rf || true
+                '''
             }
         }
         unstable {
@@ -436,6 +440,18 @@ Console: ${BUILD_URL}console"
 
 Tests: ${BUILD_URL}testReport"
                 """
+
+                // Cleanup after notifications
+                echo "🧹 Cleaning up workspace..."
+                sh '''
+                    ls -A | grep -v logs | xargs rm -rf || true
+                '''
+            }
+        }
+        cleanup {
+            script {
+                echo "🧹 Final cleanup..."
+                cleanWs()
             }
         }
     }
