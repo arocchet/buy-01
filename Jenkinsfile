@@ -266,14 +266,14 @@ pipeline {
                     // Send deployment start notification
                     env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                     env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
-                    sh '''
-                        ./scripts/send-notification.sh --slack-only "🚀 Déploiement Buy01 en cours...
+                    sh """
+                        ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚀 Déploiement Buy01 en cours...
 
 ⏳ Build #${BUILD_NUMBER} en déploiement
 🎯 Environnement: ${ENVIRONMENT}
 📋 Création de backup avant déploiement
 ⚙️ Mise à jour des services..."
-                    '''
+                    """
 
                     // Create backup before deployment
                     sh '''
@@ -363,7 +363,7 @@ pipeline {
         always {
             script {
                 echo "🧹 Cleaning up workspace..."
-                deleteDir()
+                cleanWs(deleteDirs: true, notFailOnEmpty: true, patterns: [[pattern: 'logs/**', type: 'EXCLUDE']])
             }
         }
         success {
@@ -373,15 +373,15 @@ pipeline {
                 // Send success notification
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
-                sh '''
-                    ./scripts/send-notification.sh --slack-only "🎉 Buy01 déployé avec succès en ${ENVIRONMENT}!
+                sh """
+                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🎉 Buy01 déployé avec succès en ${ENVIRONMENT}!
 
 ✅ Build #${BUILD_NUMBER} terminé
 🏆 Tous les tests passés
 🚀 Application accessible et opérationnelle
 📊 Services: User, Product, Media & API Gateway
 🔗 API Gateway: https://localhost:8080"
-                '''
+                """
             }
         }
         failure {
@@ -405,8 +405,8 @@ pipeline {
                 // Send failure notification
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
-                sh '''
-                    ./scripts/send-notification.sh --slack-only "🚨 Échec du déploiement Buy01 en ${ENVIRONMENT}
+                sh """
+                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "🚨 Échec du déploiement Buy01 en ${ENVIRONMENT}
 
 ❌ Build #${BUILD_NUMBER} échoué
 🔄 Rollback automatique en cours...
@@ -414,7 +414,7 @@ pipeline {
 🛠️ Intervention requise
 
 Console: ${BUILD_URL}console"
-                '''
+                """
             }
         }
         unstable {
@@ -424,8 +424,8 @@ Console: ${BUILD_URL}console"
                 // Send unstable notification
                 env.SLACK_WEBHOOK_URL = env.SLACK_WEBHOOK_URL ?: env.SLACK_WEBHOOK_TEMPLATE
                 env.SLACK_CHANNEL = env.SLACK_CHANNEL ?: '#deployments'
-                sh '''
-                    ./scripts/send-notification.sh --slack-only "⚠️ Build Buy01 instable en ${ENVIRONMENT}
+                sh """
+                    ${env.WORKSPACE}/scripts/send-notification.sh --slack-only "⚠️ Build Buy01 instable en ${ENVIRONMENT}
 
 🟡 Build #${BUILD_NUMBER} instable
 🧪 Certains tests ont échoué
@@ -433,7 +433,7 @@ Console: ${BUILD_URL}console"
 📊 Voir les résultats de tests
 
 Tests: ${BUILD_URL}testReport"
-                '''
+                """
             }
         }
     }
