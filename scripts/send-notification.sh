@@ -127,6 +127,12 @@ send_slack() {
     local message="$2"
     local color="${3:-good}"
 
+    echo -e "${BLUE}🔍 Debug - Environment variables:${NC}"
+    echo -e "${BLUE}  - SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:0:50}...${NC}"
+    echo -e "${BLUE}  - SLACK_CHANNEL: $SLACK_CHANNEL${NC}"
+    echo -e "${BLUE}  - BUILD_NUMBER: $BUILD_NUMBER${NC}"
+    echo -e "${BLUE}  - ENVIRONMENT: $ENVIRONMENT${NC}"
+
     if [ -z "$SLACK_WEBHOOK_URL" ]; then
         echo -e "${YELLOW}⚠️  Slack webhook URL not configured, skipping Slack notification${NC}"
         return 0
