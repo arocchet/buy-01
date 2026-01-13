@@ -21,7 +21,7 @@ EMAIL_USERNAME="${EMAIL_USERNAME:-}"
 EMAIL_PASSWORD="${EMAIL_PASSWORD:-}"
 
 SLACK_WEBHOOK_URL="${SLACK_WEBHOOK_URL:-}"
-SLACK_CHANNEL="${SLACK_CHANNEL:-#deployments}"
+SLACK_CHANNEL="${SLACK_CHANNEL:-#social}"
 
 # Project information
 PROJECT_NAME="Buy01 E-commerce Platform"
@@ -141,48 +141,41 @@ send_slack() {
         *) emoji="ℹ️"; color="#439fe0" ;;
     esac
 
-    # Create Slack payload
+    # Create Slack payload using new Block Kit format
     local payload=$(cat << EOF
 {
     "channel": "$SLACK_CHANNEL",
     "username": "Buy01 CI/CD",
     "icon_emoji": ":rocket:",
-    "attachments": [
+    "text": "$emoji $title",
+    "blocks": [
         {
-            "color": "$color",
-            "title": "$emoji $title",
-            "text": "$message",
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*$emoji $title*\n\n$message"
+            }
+        },
+        {
+            "type": "section",
             "fields": [
                 {
-                    "title": "Environment",
-                    "value": "$ENVIRONMENT",
-                    "short": true
+                    "type": "mrkdwn",
+                    "text": "*Environment:*\n$ENVIRONMENT"
                 },
                 {
-                    "title": "Build Number",
-                    "value": "$BUILD_NUMBER",
-                    "short": true
+                    "type": "mrkdwn",
+                    "text": "*Build:*\n#$BUILD_NUMBER"
                 },
                 {
-                    "title": "Git Commit",
-                    "value": "$GIT_COMMIT",
-                    "short": true
+                    "type": "mrkdwn",
+                    "text": "*Commit:*\n$GIT_COMMIT"
                 },
                 {
-                    "title": "Timestamp",
-                    "value": "$(date)",
-                    "short": true
+                    "type": "mrkdwn",
+                    "text": "*Time:*\n$(date '+%H:%M:%S')"
                 }
-            ],
-            "actions": [
-                {
-                    "type": "button",
-                    "text": "View Build",
-                    "url": "$BUILD_URL"
-                }
-            ],
-            "footer": "$PROJECT_NAME",
-            "ts": $(date +%s)
+            ]
         }
     ]
 }
@@ -190,13 +183,21 @@ EOF
 )
 
     # Send to Slack
-    if curl -X POST \
+    # Debug: Show payload being sent
+    echo -e "${BLUE}🔍 Debug - Webhook URL: ${SLACK_WEBHOOK_URL:0:50}...${NC}"
+
+    # Send to Slack
+    local response=$(curl -X POST \
         -H 'Content-type: application/json' \
         --data "$payload" \
-        "$SLACK_WEBHOOK_URL" > /dev/null 2>&1; then
+        "$SLACK_WEBHOOK_URL" 2>&1)
+
+    echo -e "${BLUE}🔍 Debug - Slack response: $response${NC}"
+
+    if [ "$response" = "ok" ]; then
         echo -e "${GREEN}✅ Slack notification sent successfully${NC}"
     else
-        echo -e "${RED}❌ Failed to send Slack notification${NC}"
+        echo -e "${RED}❌ Failed to send Slack notification. Response: $response${NC}"
     fi
 }
 

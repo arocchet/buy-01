@@ -451,7 +451,7 @@ Tests: ${BUILD_URL}testReport"
         cleanup {
             script {
                 echo "🧹 Final cleanup..."
-                cleanWs()
+                deleteDir()
             }
         }
     }
