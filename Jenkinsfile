@@ -197,6 +197,139 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    branch 'cicd-production'
+                    changeRequest()
+                }
+            }
+            environment {
+                SONAR_TOKEN = credentials('sonar-token')
+                SONAR_HOST_URL = credentials('sonar-host-url')
+            }
+            steps {
+                script {
+                    echo "🔍 Starting SonarQube code analysis..."
+
+                    // Check if SonarQube server is accessible
+                    sh '''
+                        echo "Testing SonarQube connectivity..."
+                        if curl -f -s ${SONAR_HOST_URL}/api/system/status > /dev/null 2>&1; then
+                            echo "✅ SonarQube server is accessible"
+                        else
+                            echo "⚠️ SonarQube server not accessible, skipping analysis"
+                            exit 0
+                        fi
+                    '''
+
+                    // Run SonarQube analysis
+                    sh '''
+                        echo "🔍 Running SonarQube analysis..."
+
+                        # Analyze each microservice
+                        for service in user-service product-service media-service api-gateway; do
+                            echo "🔍 Analyzing $service..."
+                            cd "microservices-architecture/$service"
+
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=buy01-ecommerce-$service \
+                                -Dsonar.projectName="Buy01 E-commerce - $service" \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_TOKEN} \
+                                -Dsonar.java.source=17 \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                                -Dsonar.qualitygate.wait=true \
+                                -Dsonar.qualitygate.timeout=300 || {
+                                    echo "❌ SonarQube analysis failed for $service"
+                                    echo "SONARQUBE_FAILED=true" >> $WORKSPACE/sonar_status.env
+                                }
+
+                            cd ../..
+                        done
+
+                        echo "✅ SonarQube analysis completed"
+                    '''
+                }
+            }
+            post {
+                always {
+                    script {
+                        // Check if SonarQube analysis failed
+                        def sonarStatus = readFile('sonar_status.env').trim()
+                        if (sonarStatus.contains('SONARQUBE_FAILED=true')) {
+                            echo "❌ SonarQube analysis failed - marking build as unstable"
+                            currentBuild.result = 'UNSTABLE'
+                        }
+                    }
+                }
+                failure {
+                    echo "❌ SonarQube analysis stage failed"
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    branch 'cicd-production'
+                    changeRequest()
+                }
+            }
+            environment {
+                SONAR_TOKEN = credentials('sonar-token')
+                SONAR_HOST_URL = credentials('sonar-host-url')
+            }
+            steps {
+                script {
+                    echo "🚦 Checking SonarQube Quality Gate..."
+
+                    sh '''
+                        echo "🚦 Waiting for Quality Gate results..."
+
+                        # Check quality gate status for each service
+                        for service in user-service product-service media-service api-gateway; do
+                            echo "🚦 Checking Quality Gate for $service..."
+
+                            # Get project status from SonarQube API
+                            QUALITY_GATE_STATUS=$(curl -s -u ${SONAR_TOKEN}: \
+                                "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=buy01-ecommerce-$service" \
+                                | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+
+                            echo "Quality Gate Status for $service: $QUALITY_GATE_STATUS"
+
+                            if [ "$QUALITY_GATE_STATUS" != "OK" ]; then
+                                echo "❌ Quality Gate failed for $service: $QUALITY_GATE_STATUS"
+                                echo "QUALITY_GATE_FAILED=true" >> $WORKSPACE/quality_gate_status.env
+                            else
+                                echo "✅ Quality Gate passed for $service"
+                            fi
+                        done
+                    '''
+                }
+            }
+            post {
+                always {
+                    script {
+                        // Check quality gate results
+                        if (fileExists('quality_gate_status.env')) {
+                            def qualityGateStatus = readFile('quality_gate_status.env').trim()
+                            if (qualityGateStatus.contains('QUALITY_GATE_FAILED=true')) {
+                                echo "❌ Quality Gate failed - failing the build"
+                                currentBuild.result = 'FAILURE'
+                                error("Quality Gate failed - code quality standards not met")
+                            }
+                        }
+                        echo "✅ All Quality Gates passed"
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             when {
                 expression { params.DEPLOY }

@@ -1,0 +1,64 @@
+# CODEOWNERS file for Buy01 E-commerce Platform
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users/teams own everything by default
+* @team-leads @senior-developers
+
+# Microservices architecture
+/microservices-architecture/ @backend-team @architects
+
+# API Gateway - critical component requiring extra review
+/microservices-architecture/api-gateway/ @api-gateway-team @security-team @architects
+
+# User Service - security-sensitive
+/microservices-architecture/user-service/ @backend-team @security-team
+
+# Product Service
+/microservices-architecture/product-service/ @backend-team @product-team
+
+# Media Service
+/microservices-architecture/media-service/ @backend-team @media-team
+
+# Frontend
+/frontend/ @frontend-team @ui-ux-team
+
+# Infrastructure and CI/CD
+/scripts/ @devops-team @infrastructure-team
+/.github/ @devops-team @infrastructure-team
+/jenkins/ @devops-team @infrastructure-team
+/deployments/ @devops-team @infrastructure-team
+/docker-compose*.yml @devops-team @infrastructure-team
+/Jenkinsfile @devops-team @infrastructure-team
+
+# Configuration files
+*.properties @devops-team @config-managers
+*.yml @devops-team @config-managers
+*.yaml @devops-team @config-managers
+pom.xml @backend-team @build-engineers
+
+# Security-sensitive files
+/scripts/generate-ssl.sh @security-team @devops-team
+**/security/ @security-team
+**/config/SecurityConfig.java @security-team @backend-team
+
+# Documentation
+*.md @documentation-team
+/docs/ @documentation-team
+
+# SonarQube configuration
+/sonar-project.properties @quality-team @devops-team
+/*sonarqube* @quality-team @devops-team
+
+# Database and data-related files
+**/repository/ @database-team @backend-team
+**/entity/ @database-team @backend-team
+**/model/ @database-team @backend-team
+
+# Test files require review from respective teams
+**/test/ @qa-team
+**/*Test.java @qa-team @backend-team
+**/*Spec.ts @qa-team @frontend-team
+
+# Package files and dependency management
+package*.json @frontend-team @dependency-managers
+**/pom.xml @backend-team @dependency-managers
