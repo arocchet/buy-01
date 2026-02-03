@@ -38,3 +38,7 @@ frontend/node_modules/
 .env.slack
 jenkins-env-vars.txt
 jenkins-slack-config.xml
+
+# SonarQube
+.sonarqube-token
+.scannerwork/

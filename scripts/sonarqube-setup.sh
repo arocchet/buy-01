@@ -4,7 +4,16 @@
 
 set -e
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Project root is one level up from scripts directory
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 echo "🚀 Starting SonarQube setup for Buy01 E-commerce Platform..."
+echo "📁 Project root: $PROJECT_ROOT"
+
+# Change to project root directory
+cd "$PROJECT_ROOT"
 
 # Function to check if Docker is running
 check_docker() {

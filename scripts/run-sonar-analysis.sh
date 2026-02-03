@@ -4,16 +4,30 @@
 
 set -e
 
-echo "🔍 Starting SonarQube analysis for Buy01 E-commerce Platform..."
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Project root is one level up from scripts directory
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Check if SonarQube token exists
-if [ ! -f .sonarqube-token ]; then
-    echo "❌ SonarQube token not found. Please run setup first: ./scripts/sonarqube-setup.sh"
-    exit 1
+echo "🔍 Starting SonarQube analysis for Buy01 E-commerce Platform..."
+echo "📁 Project root: $PROJECT_ROOT"
+
+# Change to project root directory
+cd "$PROJECT_ROOT"
+
+# Load token from environment variable or file
+if [ -z "$SONAR_TOKEN" ]; then
+    if [ -f "$PROJECT_ROOT/.sonarqube-token" ]; then
+        SONAR_TOKEN=$(cat "$PROJECT_ROOT/.sonarqube-token")
+    else
+        echo "❌ SONAR_TOKEN not set. Either:"
+        echo "   - Set SONAR_TOKEN environment variable"
+        echo "   - Run ./scripts/sonarqube-setup.sh to generate a token"
+        exit 1
+    fi
 fi
 
-SONAR_TOKEN=$(cat .sonarqube-token)
-SONAR_HOST_URL="http://localhost:9000"
+SONAR_HOST_URL="${SONAR_HOST_URL:-http://localhost:9000}"
 
 # Function to check if SonarQube is running
 check_sonarqube() {
@@ -69,34 +83,21 @@ build_frontend() {
 run_analysis() {
     echo "🔍 Running SonarQube analysis..."
 
-    # Download SonarQube Scanner if not present
-    if [ ! -f "sonar-scanner/bin/sonar-scanner" ]; then
-        echo "📥 Downloading SonarQube Scanner..."
-        mkdir -p tools
-        cd tools
-        wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-        unzip -q sonar-scanner-cli-5.0.1.3006-linux.zip
-        mv sonar-scanner-5.0.1.3006-linux sonar-scanner
-        cd ..
-        echo "✅ SonarQube Scanner downloaded"
-    fi
-
-    # Set JAVA_HOME if not set
-    if [ -z "$JAVA_HOME" ]; then
-        export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
-    fi
-
-    # Run analysis using Docker (easier approach)
+    # Run analysis using Docker sonar-scanner
+    # Note: Using --platform linux/amd64 for Apple Silicon compatibility
     docker run --rm \
+        --platform linux/amd64 \
         --network host \
         -v "$(pwd):/usr/src" \
+        -w /usr/src \
         sonarsource/sonar-scanner-cli:latest \
         -Dsonar.projectKey=buy01-ecommerce \
-        -Dsonar.sources=/usr/src \
+        -Dsonar.projectName="Buy01 E-commerce Platform" \
+        -Dsonar.sources=microservices-architecture/api-gateway/src/main/java,microservices-architecture/user-service/src/main/java,microservices-architecture/product-service/src/main/java,microservices-architecture/media-service/src/main/java,frontend/src \
         -Dsonar.host.url=$SONAR_HOST_URL \
-        -Dsonar.login=$SONAR_TOKEN \
-        -Dsonar.java.binaries=/usr/src/microservices-architecture/*/target/classes \
-        -Dsonar.exclusions="**/node_modules/**,**/target/**,**/*.min.js,**/vendor/**" \
+        -Dsonar.token=$SONAR_TOKEN \
+        -Dsonar.java.binaries=microservices-architecture/api-gateway/target/classes,microservices-architecture/user-service/target/classes,microservices-architecture/product-service/target/classes,microservices-architecture/media-service/target/classes \
+        -Dsonar.exclusions="**/node_modules/**,**/target/**,**/*.min.js,**/vendor/**,**/dist/**" \
         -Dsonar.java.source=17
 }
 

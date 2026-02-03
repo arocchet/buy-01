@@ -5,6 +5,8 @@ on:
     workflows: ["SonarQube Analysis"]
     types:
       - completed
+  schedule:
+    - cron: '0 9 * * 1'  # Monday at 9 AM UTC
 
 jobs:
   notify-results:
@@ -140,7 +142,7 @@ jobs:
 
   weekly-report:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 9 * * 1'  # Monday at 9 AM
+    if: github.event_name == 'schedule'
 
     steps:
       - name: Generate Weekly SonarQube Report

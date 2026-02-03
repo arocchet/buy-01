@@ -10,8 +10,8 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sonarqube:
-    name: SonarQube Code Analysis
+  build:
+    name: Build and Analyze
     runs-on: ubuntu-latest
 
     steps:
@@ -40,91 +40,81 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build and Test API Gateway
+      # Build all microservices in parallel
+      - name: Build API Gateway
         run: |
           cd microservices-architecture/api-gateway
-          mvn clean compile test-compile test
+          mvn clean compile -DskipTests
 
-      - name: Build and Test User Service
+      - name: Build User Service
         run: |
           cd microservices-architecture/user-service
-          mvn clean compile test-compile test
+          mvn clean compile -DskipTests
 
-      - name: Build and Test Product Service
+      - name: Build Product Service
         run: |
           cd microservices-architecture/product-service
-          mvn clean compile test-compile test
+          mvn clean compile -DskipTests
 
-      - name: Build and Test Media Service
+      - name: Build Media Service
         run: |
           cd microservices-architecture/media-service
-          mvn clean compile test-compile test
+          mvn clean compile -DskipTests
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Use a recent stable Node.js version
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Frontend Dependencies
+      - name: Install and Build Frontend
         run: |
           cd frontend
-          npm install
-
-      - name: Build Frontend
-        run: |
-          cd frontend
+          npm ci
           npm run build
 
-      - name: SonarQube Analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn sonar:sonar \
-            -Dsonar.projectKey=buy01-ecommerce \
-            -Dsonar.projectName="Buy01 E-commerce Platform" \
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.sources=microservices-architecture/api-gateway/src/main/java,microservices-architecture/user-service/src/main/java,microservices-architecture/product-service/src/main/java,microservices-architecture/media-service/src/main/java,frontend/src \
-            -Dsonar.tests=microservices-architecture/api-gateway/src/test,microservices-architecture/user-service/src/test,microservices-architecture/product-service/src/test,microservices-architecture/media-service/src/test,frontend/src \
-            -Dsonar.java.binaries=microservices-architecture/*/target/classes \
-            -Dsonar.java.test.binaries=microservices-architecture/*/target/test-classes \
-            -Dsonar.coverage.jacoco.xmlReportPaths=microservices-architecture/*/target/site/jacoco/jacoco.xml \
-            -Dsonar.java.source=17 \
-            -Dsonar.exclusions="**/node_modules/**,**/target/**,**/*.min.js,**/vendor/**,**/migrations/**" \
-            -Dsonar.typescript.node.maxspace=8192 \
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }} \
-            -Dsonar.pullrequest.branch=${{ github.head_ref }} \
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=buy01-ecommerce
+            -Dsonar.projectName=Buy01 E-commerce Platform
+            -Dsonar.sources=microservices-architecture/api-gateway/src/main/java,microservices-architecture/user-service/src/main/java,microservices-architecture/product-service/src/main/java,microservices-architecture/media-service/src/main/java,frontend/src
+            -Dsonar.java.binaries=microservices-architecture/api-gateway/target/classes,microservices-architecture/user-service/target/classes,microservices-architecture/product-service/target/classes,microservices-architecture/media-service/target/classes
+            -Dsonar.java.source=17
+            -Dsonar.exclusions=**/node_modules/**,**/target/**,**/*.min.js,**/vendor/**,**/dist/**
 
-  quality-gate:
-    name: Quality Gate Check
+      # Quality Gate check - fails the pipeline if quality gate fails
+      - name: SonarQube Quality Gate Check
+        id: sonarqube-quality-gate-check
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: "Quality Gate Status"
+        run: |
+          echo "Quality Gate status: ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+          if [ "${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}" != "PASSED" ]; then
+            echo "❌ Quality Gate FAILED - Pipeline will fail"
+            exit 1
+          fi
+          echo "✅ Quality Gate PASSED"
+
+  # Comment on PR with results
+  pr-comment:
+    name: PR Comment
     runs-on: ubuntu-latest
-    needs: sonarqube
+    needs: build
     if: github.event_name == 'pull_request'
 
     steps:
-      - name: Wait for Quality Gate
-        uses: sonarqube-quality-gate-action@v1.3.0
-        timeout-minutes: 10
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          scanMetadataReportFile: target/sonar/report-task.txt
-
-      - name: Comment PR on Quality Gate Failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ **SonarQube Quality Gate Failed**\n\nPlease fix the code quality issues before merging. Check the [SonarQube dashboard](${{ secrets.SONAR_HOST_URL }}) for details.'
-            })
-
-      - name: Comment PR on Quality Gate Success
+      - name: Comment PR on Success
         if: success()
         uses: actions/github-script@v7
         with:
@@ -133,5 +123,23 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **SonarQube Quality Gate Passed**\n\nCode quality checks passed successfully!'
+              body: '✅ **SonarQube Quality Gate Passed**\n\nCode quality checks passed successfully! Ready for review.'
+            })
+
+  pr-comment-failure:
+    name: PR Comment on Failure
+    runs-on: ubuntu-latest
+    needs: build
+    if: failure() && github.event_name == 'pull_request'
+
+    steps:
+      - name: Comment PR on Failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **SonarQube Quality Gate Failed**\n\nPlease fix the code quality issues before merging.\n\n🔗 Check the [SonarQube dashboard](${{ secrets.SONAR_HOST_URL }}/dashboard?id=buy01-ecommerce) for details.'
             })

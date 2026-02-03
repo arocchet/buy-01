@@ -6,8 +6,6 @@ This guide provides comprehensive instructions for setting up SonarQube with Doc
 
 ## 🎯 Project Goals
 
-sqp_45a93db1ad0422538aca2eaf9c81357180864594
-
 - ✅ Set up SonarQube with Docker for local and CI/CD environments
 - ✅ Configure automated code analysis for all microservices
 - ✅ Integrate with GitHub repository and pull requests
