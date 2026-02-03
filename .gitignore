@@ -33,3 +33,12 @@ uploads/
 frontend/dist/
 frontend/.angular/
 frontend/node_modules/
+
+# Slack secrets
+.env.slack
+jenkins-env-vars.txt
+jenkins-slack-config.xml
+
+# SonarQube
+.sonarqube-token
+.scannerwork/

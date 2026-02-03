@@ -1,0 +1,7 @@
+# Add these to Jenkins > Manage Jenkins > Configure System > Global Properties
+# Replace with your actual webhook URL
+
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR_TEAM_ID/YOUR_CHANNEL_ID/YOUR_TOKEN
+SLACK_CHANNEL=#deployments
+SLACK_USERNAME=Buy01 CI/CD
+SLACK_ICON_EMOJI=:shopping_cart:

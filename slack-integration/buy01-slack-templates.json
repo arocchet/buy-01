@@ -1,0 +1,252 @@
+{
+  "templates": {
+    "deployment_success": {
+      "username": "Buy01 CI/CD",
+      "icon_emoji": ":shopping_cart:",
+      "attachments": [
+        {
+          "color": "#36a64f",
+          "title": "🛒 Buy01 - Déploiement réussi",
+          "title_link": "{BUILD_URL}",
+          "text": "La plateforme e-commerce Buy01 a été déployée avec succès en {ENVIRONMENT}!",
+          "fields": [
+            {
+              "title": "🏪 Environnement",
+              "value": "{ENVIRONMENT}",
+              "short": true
+            },
+            {
+              "title": "📦 Build",
+              "value": "#{BUILD_NUMBER}",
+              "short": true
+            },
+            {
+              "title": "🏷️ Version",
+              "value": "{GIT_COMMIT}",
+              "short": true
+            },
+            {
+              "title": "⏱️ Durée",
+              "value": "{BUILD_DURATION}",
+              "short": true
+            },
+            {
+              "title": "🧪 Tests",
+              "value": "✅ Tous passés",
+              "short": true
+            },
+            {
+              "title": "🔒 Sécurité",
+              "value": "✅ Scan OK",
+              "short": true
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "text": "🔍 Voir le build",
+              "url": "{BUILD_URL}",
+              "style": "primary"
+            },
+            {
+              "type": "button",
+              "text": "🌐 Accéder à Buy01",
+              "url": "{APP_URL}"
+            }
+          ],
+          "footer": "Buy01 E-commerce Platform",
+          "footer_icon": "https://emoji.slack-edge.com/T0123/shopping_cart/icon.png",
+          "ts": "{TIMESTAMP}"
+        }
+      ]
+    },
+    "deployment_failed": {
+      "username": "Buy01 CI/CD",
+      "icon_emoji": ":warning:",
+      "attachments": [
+        {
+          "color": "#ff0000",
+          "title": "❌ Buy01 - Déploiement échoué",
+          "title_link": "{BUILD_URL}",
+          "text": "Le déploiement de Buy01 en {ENVIRONMENT} a échoué. Rollback automatique en cours...",
+          "fields": [
+            {
+              "title": "🏪 Environnement",
+              "value": "{ENVIRONMENT}",
+              "short": true
+            },
+            {
+              "title": "📦 Build",
+              "value": "#{BUILD_NUMBER}",
+              "short": true
+            },
+            {
+              "title": "🚨 Erreur",
+              "value": "{ERROR_MESSAGE}",
+              "short": false
+            },
+            {
+              "title": "🔄 Action",
+              "value": "Rollback automatique vers build #{PREVIOUS_BUILD}",
+              "short": false
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "text": "🔍 Voir les logs",
+              "url": "{BUILD_URL}console",
+              "style": "danger"
+            },
+            {
+              "type": "button",
+              "text": "📊 Dashboard",
+              "url": "{JENKINS_URL}"
+            }
+          ],
+          "footer": "Buy01 E-commerce Platform",
+          "footer_icon": "https://emoji.slack-edge.com/T0123/warning/icon.png",
+          "ts": "{TIMESTAMP}"
+        }
+      ]
+    },
+    "rollback_success": {
+      "username": "Buy01 CI/CD",
+      "icon_emoji": ":arrows_counterclockwise:",
+      "attachments": [
+        {
+          "color": "#ff9900",
+          "title": "🔄 Buy01 - Rollback réussi",
+          "text": "Rollback de Buy01 effectué avec succès en {ENVIRONMENT}",
+          "fields": [
+            {
+              "title": "🏪 Environnement",
+              "value": "{ENVIRONMENT}",
+              "short": true
+            },
+            {
+              "title": "⬅️ Version restaurée",
+              "value": "Build #{ROLLBACK_BUILD}",
+              "short": true
+            },
+            {
+              "title": "🏥 Status santé",
+              "value": "✅ Tous les services OK",
+              "short": false
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "text": "🌐 Vérifier Buy01",
+              "url": "{APP_URL}",
+              "style": "primary"
+            }
+          ],
+          "footer": "Buy01 E-commerce Platform",
+          "ts": "{TIMESTAMP}"
+        }
+      ]
+    },
+    "test_results": {
+      "username": "Buy01 CI/CD",
+      "icon_emoji": ":test_tube:",
+      "attachments": [
+        {
+          "color": "{TEST_COLOR}",
+          "title": "🧪 Buy01 - Résultats des tests",
+          "text": "Tests automatisés terminés pour Buy01",
+          "fields": [
+            {
+              "title": "🖥️ Backend Tests",
+              "value": "✅ {BACKEND_TESTS_PASSED}/{BACKEND_TESTS_TOTAL} passés",
+              "short": true
+            },
+            {
+              "title": "🌐 Frontend Tests",
+              "value": "✅ {FRONTEND_TESTS_PASSED}/{FRONTEND_TESTS_TOTAL} passés",
+              "short": true
+            },
+            {
+              "title": "📊 Couverture Backend",
+              "value": "{BACKEND_COVERAGE}%",
+              "short": true
+            },
+            {
+              "title": "📊 Couverture Frontend",
+              "value": "{FRONTEND_COVERAGE}%",
+              "short": true
+            },
+            {
+              "title": "🔒 Scan sécurité",
+              "value": "{SECURITY_SCAN_RESULT}",
+              "short": false
+            }
+          ],
+          "actions": [
+            {
+              "type": "button",
+              "text": "📈 Rapport détaillé",
+              "url": "{TEST_REPORT_URL}"
+            }
+          ],
+          "footer": "Buy01 E-commerce Platform",
+          "ts": "{TIMESTAMP}"
+        }
+      ]
+    },
+    "maintenance_mode": {
+      "username": "Buy01 CI/CD",
+      "icon_emoji": ":construction:",
+      "attachments": [
+        {
+          "color": "#ffaa00",
+          "title": "🚧 Buy01 - Mode maintenance",
+          "text": "La plateforme Buy01 passe en mode maintenance pour déploiement",
+          "fields": [
+            {
+              "title": "🏪 Environnement",
+              "value": "{ENVIRONMENT}",
+              "short": true
+            },
+            {
+              "title": "⏱️ Durée estimée",
+              "value": "{MAINTENANCE_DURATION}",
+              "short": true
+            },
+            {
+              "title": "📋 Raison",
+              "value": "{MAINTENANCE_REASON}",
+              "short": false
+            }
+          ],
+          "footer": "Buy01 E-commerce Platform",
+          "ts": "{TIMESTAMP}"
+        }
+      ]
+    }
+  },
+  "channels": {
+    "deployments": "#deployments",
+    "alerts": "#alerts",
+    "general": "#buy01-general",
+    "dev": "#buy01-dev"
+  },
+  "environments": {
+    "production": {
+      "icon": "🏭",
+      "color": "#ff0000",
+      "url": "https://buy01.com"
+    },
+    "staging": {
+      "icon": "🎭",
+      "color": "#ff9900",
+      "url": "https://staging.buy01.com"
+    },
+    "development": {
+      "icon": "🔧",
+      "color": "#36a64f",
+      "url": "https://dev.buy01.com"
+    }
+  }
+}

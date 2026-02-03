@@ -171,3 +171,8 @@ src/
 │       └── application.yml  # Configuration de l'application
 └── test/                    # Tests unitaires et d'intégration
 ```
+
+Une fois lancé :
+- Application complète : http://localhost:4200 (frontend Angular)
+- API Gateway : http://localhost:8080 (point d'entrée backend)
+- Base de données : Visualiseur MongoDB à http://localhost:27017Test pipeline Mon Jan 12 13:31:08 CET 2026

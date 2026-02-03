@@ -1,0 +1,177 @@
+name: SonarQube Notifications
+
+on:
+  workflow_run:
+    workflows: ["SonarQube Analysis"]
+    types:
+      - completed
+  schedule:
+    - cron: '0 9 * * 1'  # Monday at 9 AM UTC
+
+jobs:
+  notify-results:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get Analysis Results
+        id: sonar-results
+        run: |
+          # Extract workflow run details
+          echo "workflow_conclusion=${{ github.event.workflow_run.conclusion }}" >> $GITHUB_OUTPUT
+          echo "workflow_name=${{ github.event.workflow_run.name }}" >> $GITHUB_OUTPUT
+          echo "workflow_url=${{ github.event.workflow_run.html_url }}" >> $GITHUB_OUTPUT
+          echo "commit_sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack on Success
+        if: github.event.workflow_run.conclusion == 'success'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#code-quality'
+          username: 'SonarQube Bot'
+          icon_emoji: ':white_check_mark:'
+          title: 'SonarQube Analysis Passed'
+          text: |
+            ✅ **SonarQube Analysis Completed Successfully**
+
+            📊 **Details:**
+            • Project: Buy01 E-commerce Platform
+            • Branch: `${{ steps.sonar-results.outputs.branch }}`
+            • Commit: `${{ steps.sonar-results.outputs.commit_sha }}`
+            • Quality Gate: **PASSED** ✅
+
+            🔗 **Links:**
+            • [Workflow Run](${{ steps.sonar-results.outputs.workflow_url }})
+            • [SonarQube Dashboard](${{ secrets.SONAR_HOST_URL }}/dashboard?id=buy01-ecommerce)
+
+            💡 All quality checks passed! Code is ready for review.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on Failure
+        if: github.event.workflow_run.conclusion == 'failure'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#code-quality'
+          username: 'SonarQube Bot'
+          icon_emoji: ':x:'
+          title: 'SonarQube Analysis Failed'
+          text: |
+            ❌ **SonarQube Analysis Failed**
+
+            📊 **Details:**
+            • Project: Buy01 E-commerce Platform
+            • Branch: `${{ steps.sonar-results.outputs.branch }}`
+            • Commit: `${{ steps.sonar-results.outputs.commit_sha }}`
+            • Quality Gate: **FAILED** ❌
+
+            🔗 **Links:**
+            • [Workflow Run](${{ steps.sonar-results.outputs.workflow_url }})
+            • [SonarQube Dashboard](${{ secrets.SONAR_HOST_URL }}/dashboard?id=buy01-ecommerce)
+            • [Issues](${{ secrets.SONAR_HOST_URL }}/project/issues?id=buy01-ecommerce)
+
+            ⚠️ **Action Required:** Please fix code quality issues before proceeding.
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send Email Notification on Failure
+        if: github.event.workflow_run.conclusion == 'failure'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: '🚨 SonarQube Quality Gate Failed - Buy01 E-commerce'
+          to: ${{ secrets.TEAM_EMAIL }}
+          from: 'Buy01 CI/CD <noreply@buy01.com>'
+          html_body: |
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .header { background-color: #dc3545; color: white; padding: 20px; text-align: center; }
+                    .content { padding: 20px; }
+                    .details { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                    .button { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 5px; }
+                    .alert { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>🚨 SonarQube Quality Gate Failed</h2>
+                    <p>Buy01 E-commerce Platform</p>
+                </div>
+
+                <div class="content">
+                    <p>Hello Development Team,</p>
+
+                    <p>The SonarQube analysis for the Buy01 E-commerce Platform has <strong>failed</strong> the quality gate checks.</p>
+
+                    <div class="details">
+                        <h3>📊 Analysis Details</h3>
+                        <ul>
+                            <li><strong>Project:</strong> Buy01 E-commerce Platform</li>
+                            <li><strong>Branch:</strong> ${{ steps.sonar-results.outputs.branch }}</li>
+                            <li><strong>Commit:</strong> ${{ steps.sonar-results.outputs.commit_sha }}</li>
+                            <li><strong>Status:</strong> ❌ Quality Gate Failed</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert">
+                        <strong>⚠️ Action Required:</strong> Please review and fix the code quality issues before proceeding with deployment.
+                    </div>
+
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="${{ steps.sonar-results.outputs.workflow_url }}" class="button">View Workflow</a>
+                        <a href="${{ secrets.SONAR_HOST_URL }}/dashboard?id=buy01-ecommerce" class="button">SonarQube Dashboard</a>
+                        <a href="${{ secrets.SONAR_HOST_URL }}/project/issues?id=buy01-ecommerce" class="button">View Issues</a>
+                    </div>
+
+                    <p>Best regards,<br>
+                    Buy01 CI/CD System</p>
+                </div>
+            </body>
+            </html>
+
+  weekly-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Generate Weekly SonarQube Report
+        run: |
+          echo "Generating weekly SonarQube report..."
+          # This would typically call SonarQube APIs to get metrics
+
+      - name: Send Weekly Report to Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          channel: '#code-quality'
+          username: 'SonarQube Bot'
+          icon_emoji: ':bar_chart:'
+          title: 'Weekly Code Quality Report'
+          text: |
+            📊 **Weekly SonarQube Report - Buy01 E-commerce**
+
+            📈 **Quality Metrics:**
+            • Analyses performed this week: Check SonarQube dashboard
+            • Quality Gate pass rate: View detailed metrics
+            • New issues found: See trending data
+            • Security hotspots: Review security dashboard
+
+            🔗 **Quick Links:**
+            • [SonarQube Dashboard](${{ secrets.SONAR_HOST_URL }}/dashboard?id=buy01-ecommerce)
+            • [Quality History](${{ secrets.SONAR_HOST_URL }}/project/activity?id=buy01-ecommerce)
+            • [Security Dashboard](${{ secrets.SONAR_HOST_URL }}/security_hotspots?id=buy01-ecommerce)
+
+            💡 Keep up the excellent work maintaining code quality! 🚀
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -32,6 +32,17 @@ logging:
 spring:
   config:
     activate:
+      on-profile: dev
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://admin:password123@mongodb:27017/userservice?authSource=admin}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+
+---
+spring:
+  config:
+    activate:
       on-profile: docker
   data:
     mongodb:
