@@ -69,7 +69,7 @@ jobs:
       - name: Install and Build Frontend
         run: |
           cd frontend
-          npm ci
+          npm install
           npm run build
 
       - name: SonarCloud Scan
