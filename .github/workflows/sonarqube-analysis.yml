@@ -81,7 +81,6 @@ jobs:
           args: >
             -Dsonar.projectKey=arocchet_buy-01
             -Dsonar.organization=arocchet
-            -Dsonar.projectName=Buy01 E-commerce Platform
             -Dsonar.sources=microservices-architecture/api-gateway/src/main/java,microservices-architecture/user-service/src/main/java,microservices-architecture/product-service/src/main/java,microservices-architecture/media-service/src/main/java,frontend/src
             -Dsonar.java.binaries=microservices-architecture/api-gateway/target/classes,microservices-architecture/user-service/target/classes,microservices-architecture/product-service/target/classes,microservices-architecture/media-service/target/classes
             -Dsonar.java.source=17
