@@ -8,6 +8,7 @@ on:
       - cicd-production
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:  # Permet le déclenchement manuel
 
 jobs:
   build:
