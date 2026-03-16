@@ -44,6 +44,21 @@ spring:
           filters:
             - name: JwtAuthenticationFilter
 
+        # Order Service Routes
+        - id: order-service-orders
+          uri: ${ORDER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: order-service-cart
+          uri: ${ORDER_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - name: JwtAuthenticationFilter
+
   security:
     jwt:
       secret: mySecretKey123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
@@ -92,5 +107,19 @@ spring:
           uri: http://media-service:8083
           predicates:
             - Path=/api/media/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: order-service-orders
+          uri: http://order-service:8084
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: order-service-cart
+          uri: http://order-service:8084
+          predicates:
+            - Path=/api/cart/**
           filters:
             - name: JwtAuthenticationFilter

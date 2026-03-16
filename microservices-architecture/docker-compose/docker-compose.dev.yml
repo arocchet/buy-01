@@ -22,6 +22,13 @@ services:
     volumes:
       - ./logs:/app/logs
 
+  order-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ROOT=DEBUG
+    volumes:
+      - ./logs:/app/logs
+
   api-gateway:
     environment:
       - SPRING_PROFILES_ACTIVE=dev

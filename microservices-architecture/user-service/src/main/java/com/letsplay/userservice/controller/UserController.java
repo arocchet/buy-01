@@ -5,6 +5,7 @@ import com.letsplay.userservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -17,6 +18,31 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    // ── Own profile (any authenticated user) ─────────────────────────────────
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyProfile(Authentication authentication) {
+        String userId = authentication.getName();
+        Optional<User> user = userService.getUserById(userId);
+        if (user.isPresent()) {
+            return ResponseEntity.ok(user.get());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(@Valid @RequestBody User userDetails, Authentication authentication) {
+        try {
+            String userId = authentication.getName();
+            User updated = userService.updateUser(userId, userDetails);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ── Admin / Seller operations ─────────────────────────────────────────────
 
     @GetMapping
     @PreAuthorize("hasRole('SELLER')")

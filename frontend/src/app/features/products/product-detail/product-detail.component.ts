@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { MediaService } from '../../../core/services/media.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CartService } from '../../../core/services/cart.service';
 import { Product } from '../../../shared/models/product.model';
 import { Media } from '../../../shared/models/media.model';
 
@@ -70,8 +71,8 @@ import { Media } from '../../../shared/models/media.model';
 
               <div class="product-actions">
                 @if (authService.isClient()) {
-                  <button class="btn btn-primary btn-lg">
-                    Add to Cart
+                  <button class="btn btn-primary btn-lg" (click)="addToCart()" [disabled]="addingToCart()">
+                    {{ addingToCart() ? '✓ Added to Cart!' : '🛒 Add to Cart' }}
                   </button>
                 }
                 @if (isOwner()) {
@@ -269,12 +270,14 @@ export class ProductDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private productService = inject(ProductService);
   private mediaService = inject(MediaService);
+  private cartService = inject(CartService);
   authService = inject(AuthService);
 
   product = signal<Product | null>(null);
   media = signal<Media[]>([]);
   loading = signal(true);
   selectedImage = signal<string | null>(null);
+  addingToCart = signal(false);
 
   ngOnInit(): void {
     const productId = this.route.snapshot.paramMap.get('id');
@@ -319,5 +322,21 @@ export class ProductDetailComponent implements OnInit {
     const user = this.authService.currentUser();
     const product = this.product();
     return !!user && !!product && user.id === product.userId;
+  }
+
+  addToCart(): void {
+    const product = this.product();
+    if (!product) return;
+    this.addingToCart.set(true);
+    this.cartService.addItem({
+      productId: product.id,
+      productName: product.name,
+      quantity: 1,
+      unitPrice: product.price,
+      sellerId: product.userId
+    }).subscribe({
+      next: () => setTimeout(() => this.addingToCart.set(false), 2000),
+      error: () => this.addingToCart.set(false)
+    });
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Product, ProductRequest } from '../../shared/models/product.model';
@@ -35,8 +35,12 @@ export class ProductService {
         return this.http.get<Product[]>(`${environment.apiUrl}/products/user/${userId}`);
     }
 
-    searchProducts(name: string): Observable<Product[]> {
-        return this.http.get<Product[]>(`${environment.apiUrl}/products/search?name=${name}`);
+    searchProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<Product[]> {
+        let params = new HttpParams();
+        if (keyword) params = params.set('keyword', keyword);
+        if (minPrice !== undefined && minPrice !== null) params = params.set('minPrice', minPrice.toString());
+        if (maxPrice !== undefined && maxPrice !== null) params = params.set('maxPrice', maxPrice.toString());
+        return this.http.get<Product[]>(`${environment.apiUrl}/products/search`, { params });
     }
 
     createProduct(product: ProductRequest): Observable<Product> {
@@ -70,3 +74,4 @@ export class ProductService {
             );
     }
 }
+

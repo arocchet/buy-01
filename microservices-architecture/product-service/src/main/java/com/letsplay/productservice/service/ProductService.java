@@ -38,6 +38,42 @@ public class ProductService {
         return productRepository.findByNameContainingIgnoreCase(name);
     }
 
+    /**
+     * Full search + filter: keyword (name/description), minPrice, maxPrice.
+     * Pass null to skip a filter.
+     */
+    public List<Product> searchAndFilter(String keyword, Double minPrice, Double maxPrice) {
+        boolean hasKeyword = keyword != null && !keyword.isBlank();
+        boolean hasMin = minPrice != null;
+        boolean hasMax = maxPrice != null;
+
+        if (hasKeyword && hasMin && hasMax) {
+            return productRepository.findByNameContainingIgnoreCaseAndPriceBetween(keyword, minPrice, maxPrice);
+        }
+        if (hasKeyword) {
+            List<Product> byKeyword = productRepository.searchByKeyword(keyword);
+            if (hasMin) {
+                double min = minPrice;
+                byKeyword = byKeyword.stream().filter(p -> p.getPrice() >= min).collect(java.util.stream.Collectors.toList());
+            }
+            if (hasMax) {
+                double max = maxPrice;
+                byKeyword = byKeyword.stream().filter(p -> p.getPrice() <= max).collect(java.util.stream.Collectors.toList());
+            }
+            return byKeyword;
+        }
+        if (hasMin && hasMax) {
+            return productRepository.findByPriceBetween(minPrice, maxPrice);
+        }
+        if (hasMin) {
+            return productRepository.findByPriceGreaterThanEqual(minPrice);
+        }
+        if (hasMax) {
+            return productRepository.findByPriceLessThanEqual(maxPrice);
+        }
+        return productRepository.findAll();
+    }
+
     public Product createProduct(ProductRequest request, String userId, String userRole) {
         // Only sellers can create products
         if (!"seller".equals(userRole)) {

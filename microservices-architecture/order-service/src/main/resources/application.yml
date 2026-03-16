@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: order-service
+  profiles:
+    active: local
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/orderservice
+  security:
+    jwt:
+      secret: mySecretKey123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+server:
+  port: 8084
+
+logging:
+  level:
+    com.letsplay.orderservice: DEBUG
+    org.springframework.security: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://admin:password123@mongodb:27017/orderservice?authSource=admin}

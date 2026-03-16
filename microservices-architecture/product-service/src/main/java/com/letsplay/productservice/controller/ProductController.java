@@ -37,9 +37,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductsByUserId(userId));
     }
 
+    /** Unified search+filter endpoint: ?keyword=&minPrice=&maxPrice= */
     @GetMapping("/search")
-    public ResponseEntity<List<Product>> searchProducts(@RequestParam String name) {
-        return ResponseEntity.ok(productService.searchProductsByName(name));
+    public ResponseEntity<List<Product>> searchProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String name,   // backwards-compat alias
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice) {
+        String searchTerm = (keyword != null) ? keyword : name;
+        return ResponseEntity.ok(productService.searchAndFilter(searchTerm, minPrice, maxPrice));
     }
 
     @PostMapping

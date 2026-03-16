@@ -29,6 +29,24 @@ export const routes: Routes = [
             .then(m => m.ProductDetailComponent)
     },
     {
+        path: 'cart',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/cart/cart.component')
+            .then(m => m.CartComponent)
+    },
+    {
+        path: 'orders',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/orders/orders.component')
+            .then(m => m.OrdersComponent)
+    },
+    {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () => import('./features/profile/profile.component')
+            .then(m => m.ProfileComponent)
+    },
+    {
         path: 'seller',
         canActivate: [authGuard, sellerGuard],
         children: [
@@ -64,3 +82,4 @@ export const routes: Routes = [
         redirectTo: ''
     }
 ];
+
