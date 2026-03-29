@@ -107,7 +107,25 @@ public class MediaService {
         response.setFileSize(media.getFileSize());
         response.setOriginalFilename(media.getOriginalFilename());
         response.setUploadedAt(media.getUploadedAt());
-        response.setUrl(baseUrl + "/api/media/" + media.getId() + "/download");
+        response.setUrl(buildDownloadUrl(media.getId()));
         return response;
+    }
+
+    private String buildDownloadUrl(String mediaId) {
+        String prefix = baseUrl == null ? "" : baseUrl.trim();
+
+        if (prefix.isEmpty()) {
+            return "/api/media/" + mediaId + "/download";
+        }
+
+        if (prefix.endsWith("/")) {
+            prefix = prefix.substring(0, prefix.length() - 1);
+        }
+
+        if (prefix.endsWith("/api")) {
+            return prefix + "/media/" + mediaId + "/download";
+        }
+
+        return prefix + "/api/media/" + mediaId + "/download";
     }
 }
