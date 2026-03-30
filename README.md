@@ -16,6 +16,12 @@ Une API RESTful CRUD développée avec Spring Boot et MongoDB pour la gestion d'
 - Maven 3.6+
 - MongoDB 4.0+ en cours d'exécution
 
+## Nexus Artifact Management
+
+Le guide complet pour l'installation Nexus, la publication Maven/Docker et la configuration CI est disponible ici:
+
+- `docs/NEXUS-PROJECT-GUIDE.md`
+
 ## Installation et Exécution
 
 1. **Clonez le projet** :

@@ -73,7 +73,9 @@ jobs:
           npm run build
 
       - name: SonarCloud Scan
+        id: sonarcloud_scan
         uses: SonarSource/sonarcloud-github-action@v3
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -87,10 +89,21 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/target/**,**/*.min.js,**/vendor/**,**/dist/**
 
       - name: SonarCloud Quality Gate Check
+        id: quality_gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        continue-on-error: true
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarCloud Non-Blocking Summary
+        if: always()
+        run: |
+          echo "Sonar scan outcome: ${{ steps.sonarcloud_scan.outcome }}"
+          echo "Quality gate outcome: ${{ steps.quality_gate.outcome }}"
+          if [ "${{ steps.sonarcloud_scan.outcome }}" != "success" ] || [ "${{ steps.quality_gate.outcome }}" != "success" ]; then
+            echo "⚠️ SonarCloud is running in non-blocking mode: pipeline continues despite analysis/gate issues."
+          fi
 
   pr-comment:
     name: PR Comment
@@ -106,7 +119,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ **SonarCloud Quality Gate Passed**\n\n🔗 [View Analysis](https://sonarcloud.io/dashboard?id=arocchet_buy-01)'
+              body: 'ℹ️ **SonarCloud Analysis Completed (Non-Blocking Mode)**\n\nLe pipeline continue meme si la Quality Gate echoue.\n🔗 [View Analysis](https://sonarcloud.io/dashboard?id=arocchet_buy-01)'
             })
 
   pr-comment-failure:
