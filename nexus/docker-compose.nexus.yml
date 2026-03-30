@@ -1,0 +1,15 @@
+services:
+  nexus:
+    image: sonatype/nexus3:latest
+    container_name: nexus
+    user: "200"
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+      - "8085:8085"
+      - "8086:8086"
+    volumes:
+      - nexus_data:/nexus-data
+
+volumes:
+  nexus_data:

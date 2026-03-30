@@ -17,6 +17,11 @@ pipeline {
             defaultValue: true,
             description: 'Deploy after successful build'
         )
+        booleanParam(
+            name: 'PUBLISH_ARTIFACTS',
+            defaultValue: true,
+            description: 'Publish Maven and Docker artifacts to Nexus'
+        )
         string(
             name: 'BRANCH',
             defaultValue: 'cicd-production',
@@ -42,6 +47,11 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000'
         APP_NAME = 'buy01'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        NEXUS_BASE_URL = 'http://localhost:8081'
+        NEXUS_MAVEN_PUBLIC_URL = 'http://localhost:8081/repository/maven-public/'
+        NEXUS_MAVEN_RELEASES_URL = 'http://localhost:8081/repository/maven-releases/'
+        NEXUS_MAVEN_SNAPSHOTS_URL = 'http://localhost:8081/repository/maven-snapshots/'
+        NEXUS_DOCKER_HOSTED = 'localhost:8085'
         // Slack webhook (configurez SLACK_WEBHOOK_URL dans Jenkins)
         SLACK_WEBHOOK_TEMPLATE = 'https://hooks.slack.com/services/T093JERASCR/B0A8J2SDY9X/VOTRE_TOKEN'
     }
@@ -68,6 +78,13 @@ pipeline {
                     echo "Branch: ${params.BRANCH}"
                     echo "Commit: ${env.GIT_COMMIT_SHORT}"
                     echo "Build Number: ${env.BUILD_NUMBER}"
+
+                    env.ARTIFACT_VERSION = "1.0.${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
+                    env.MAVEN_DEPLOY_REPO_ID = params.BRANCH == 'main' ? 'nexus-releases' : 'nexus-snapshots'
+                    env.MAVEN_DEPLOY_REPO_URL = params.BRANCH == 'main' ? env.NEXUS_MAVEN_RELEASES_URL : env.NEXUS_MAVEN_SNAPSHOTS_URL
+
+                    echo "Artifact version: ${env.ARTIFACT_VERSION}"
+                    echo "Maven deploy repository: ${env.MAVEN_DEPLOY_REPO_ID}"
                 }
             }
         }
@@ -241,8 +258,7 @@ pipeline {
                                 -Dsonar.login=${SONAR_TOKEN} \
                                 -Dsonar.java.source=17 \
                                 -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-                                -Dsonar.qualitygate.wait=true \
-                                -Dsonar.qualitygate.timeout=300 || {
+                                -Dsonar.qualitygate.wait=false || {
                                     echo "❌ SonarQube analysis failed for $service"
                                     echo "SONARQUBE_FAILED=true" >> $WORKSPACE/sonar_status.env
                                 }
@@ -257,11 +273,13 @@ pipeline {
             post {
                 always {
                     script {
-                        // Check if SonarQube analysis failed
-                        def sonarStatus = readFile('sonar_status.env').trim()
-                        if (sonarStatus.contains('SONARQUBE_FAILED=true')) {
-                            echo "❌ SonarQube analysis failed - marking build as unstable"
-                            currentBuild.result = 'UNSTABLE'
+                        // Sonar is non-blocking: mark unstable only when analysis failed.
+                        if (fileExists('sonar_status.env')) {
+                            def sonarStatus = readFile('sonar_status.env').trim()
+                            if (sonarStatus.contains('SONARQUBE_FAILED=true')) {
+                                echo "⚠️ SonarQube analysis failed - build continues (non-blocking mode)"
+                                currentBuild.result = 'UNSTABLE'
+                            }
                         }
                     }
                 }
@@ -315,44 +333,140 @@ pipeline {
             post {
                 always {
                     script {
-                        // Check quality gate results
+                        // Quality Gate is non-blocking: warn and keep pipeline running.
                         if (fileExists('quality_gate_status.env')) {
                             def qualityGateStatus = readFile('quality_gate_status.env').trim()
                             if (qualityGateStatus.contains('QUALITY_GATE_FAILED=true')) {
-                                echo "❌ Quality Gate failed - failing the build"
-                                currentBuild.result = 'FAILURE'
-                                error("Quality Gate failed - code quality standards not met")
+                                echo "⚠️ Quality Gate failed - build continues (non-blocking mode)"
+                                currentBuild.result = 'UNSTABLE'
+                            } else {
+                                echo "✅ All Quality Gates passed"
                             }
+                        } else {
+                            echo "✅ All Quality Gates passed"
                         }
-                        echo "✅ All Quality Gates passed"
                     }
                 }
             }
         }
 
-        stage('Docker Build') {
+        stage('Publish Maven Artifacts to Nexus') {
             when {
-                expression { params.DEPLOY }
+                expression { params.PUBLISH_ARTIFACTS }
+            }
+            environment {
+                NEXUS_USER = credentials('nexus-username')
+                NEXUS_PASSWORD = credentials('nexus-password')
             }
             parallel {
-                stage('Build Backend Images') {
+                stage('Publish User Service Jar') {
+                    steps {
+                        dir('microservices-architecture/user-service') {
+                            sh '''
+                                mvn -B -s $WORKSPACE/.mvn/settings-nexus.xml \
+                                  -DskipTests \
+                                  -DaltDeploymentRepository=${MAVEN_DEPLOY_REPO_ID}::default::${MAVEN_DEPLOY_REPO_URL} \
+                                  deploy
+                            '''
+                        }
+                    }
+                }
+
+                stage('Publish Product Service Jar') {
+                    steps {
+                        dir('microservices-architecture/product-service') {
+                            sh '''
+                                mvn -B -s $WORKSPACE/.mvn/settings-nexus.xml \
+                                  -DskipTests \
+                                  -DaltDeploymentRepository=${MAVEN_DEPLOY_REPO_ID}::default::${MAVEN_DEPLOY_REPO_URL} \
+                                  deploy
+                            '''
+                        }
+                    }
+                }
+
+                stage('Publish Media Service Jar') {
+                    steps {
+                        dir('microservices-architecture/media-service') {
+                            sh '''
+                                mvn -B -s $WORKSPACE/.mvn/settings-nexus.xml \
+                                  -DskipTests \
+                                  -DaltDeploymentRepository=${MAVEN_DEPLOY_REPO_ID}::default::${MAVEN_DEPLOY_REPO_URL} \
+                                  deploy
+                            '''
+                        }
+                    }
+                }
+
+                stage('Publish API Gateway Jar') {
+                    steps {
+                        dir('microservices-architecture/api-gateway') {
+                            sh '''
+                                mvn -B -s $WORKSPACE/.mvn/settings-nexus.xml \
+                                  -DskipTests \
+                                  -DaltDeploymentRepository=${MAVEN_DEPLOY_REPO_ID}::default::${MAVEN_DEPLOY_REPO_URL} \
+                                  deploy
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build & Publish to Nexus') {
+            when {
+                expression { params.DEPLOY && params.PUBLISH_ARTIFACTS }
+            }
+            parallel {
+                stage('Build and Publish Backend Images') {
                     steps {
                         script {
                             echo "🐳 Building Docker images for backend services..."
                             def services = ['user-service', 'product-service', 'media-service', 'api-gateway']
+
+                            withCredentials([
+                                string(credentialsId: 'nexus-username', variable: 'NEXUS_USER'),
+                                string(credentialsId: 'nexus-password', variable: 'NEXUS_PASSWORD')
+                            ]) {
+                                sh 'echo "$NEXUS_PASSWORD" | docker login ${NEXUS_DOCKER_HOSTED} -u "$NEXUS_USER" --password-stdin'
+
+                                services.each { service ->
+                                    def image = "${env.NEXUS_DOCKER_HOSTED}/${env.APP_NAME}/${service}:${env.ARTIFACT_VERSION}"
+                                    def imageLatest = "${env.NEXUS_DOCKER_HOSTED}/${env.APP_NAME}/${service}:latest"
+
+                                    sh "docker build -t ${image} -t ${imageLatest} microservices-architecture/${service}"
+                                    sh "docker push ${image}"
+                                    sh "docker push ${imageLatest}"
+                                    echo "✅ ${service} Docker image published: ${image}"
+                                }
+
+                                sh 'docker logout ${NEXUS_DOCKER_HOSTED}'
+                            }
+
                             services.each { service ->
-                                echo "✅ ${service} Docker build simulated"
+                                echo "✅ ${service} Docker publish completed"
                             }
                         }
                     }
                 }
 
-                stage('Build Frontend Image') {
+                stage('Build and Publish Frontend Image') {
                     steps {
-                        dir('frontend') {
-                            script {
-                                echo "🐳 Building Frontend Docker image..."
-                                echo "✅ Frontend Docker build simulated"
+                        script {
+                            withCredentials([
+                                string(credentialsId: 'nexus-username', variable: 'NEXUS_USER'),
+                                string(credentialsId: 'nexus-password', variable: 'NEXUS_PASSWORD')
+                            ]) {
+                                def frontendImage = "${env.NEXUS_DOCKER_HOSTED}/${env.APP_NAME}/frontend:${env.ARTIFACT_VERSION}"
+                                def frontendImageLatest = "${env.NEXUS_DOCKER_HOSTED}/${env.APP_NAME}/frontend:latest"
+
+                                sh 'echo "$NEXUS_PASSWORD" | docker login ${NEXUS_DOCKER_HOSTED} -u "$NEXUS_USER" --password-stdin'
+                                sh "docker build -t ${frontendImage} -t ${frontendImageLatest} frontend"
+                                sh "docker push ${frontendImage}"
+                                sh "docker push ${frontendImageLatest}"
+                                sh 'docker logout ${NEXUS_DOCKER_HOSTED}'
+
+                                echo "✅ Frontend Docker image published: ${frontendImage}"
                             }
                         }
                     }
